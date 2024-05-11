@@ -31,24 +31,6 @@ async function run() {
     const userCollection = client.db('restaurantDB').collection('user');
     const imageCollection = client.db('restaurantDB').collection('image');
 
-    //food api
-    // app.get('/food', async(req, res) =>{
-    //   const cursor = foodCollection.find();
-    //   const result = await cursor.toArray();
-    //   res.send(result);
-    // })
-    // app.get('/food', async (req, res) => {
-    //   const { name } = req.query; 
-    //   let query = {};
-
-    //   if (name) { 
-    //     query = { name: { $regex: new RegExp(name, 'i') } }; 
-    //   }
-
-    //   const cursor = foodCollection.find(query);
-    //   const result = await cursor.toArray();
-    //   res.send(result);
-    // });
     app.get('/food', async (req, res) => {
       const { name, email } = req.query; // Accept both name and email query parameters
       let query = {};
@@ -119,6 +101,16 @@ async function run() {
     })
 
     //image api
+  
+
+    app.post('/image', async(req,res) =>{
+      const newImage = req.body;
+      console.log(newImage);
+      const result = await imageCollection.insertOne(newImage);
+      res.send(result)
+      console.log(result)
+  })
+
     app.get('/image', async(req, res) =>{
       const cursor = imageCollection.find();
        const result = await cursor.toArray();
