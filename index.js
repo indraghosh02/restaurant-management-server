@@ -30,6 +30,7 @@ async function run() {
        const foodCollection = client.db('restaurantDB').collection('food');
     const userCollection = client.db('restaurantDB').collection('user');
     const imageCollection = client.db('restaurantDB').collection('image');
+    const purchaseCollection = client.db('restaurantDB').collection('purchase');
 
     app.get('/food', async (req, res) => {
       const { name, email } = req.query; // Accept both name and email query parameters
@@ -49,6 +50,67 @@ async function run() {
     });
 
 
+
+    // Add this endpoint to your existing server code
+
+// Purchase endpoint
+// app.post('/purchase', async (req, res) => {
+//   try {
+//       const { foodId, quantity, buyerName, buyerEmail, buyingDate } = req.body;
+
+//       // Perform any necessary validation on the incoming data
+      
+//       // Example: Update the food quantity in the database
+//       const food = await foodCollection.findOne({ _id: ObjectId(foodId) });
+//       if (!food) {
+//           return res.status(404).json({ error: 'Food not found' });
+//       }
+
+//       if (food.quantity < quantity) {
+//           return res.status(400).json({ error: 'Insufficient quantity available' });
+//       }
+
+//       // Update the quantity of the food in the database
+//       await foodCollection.updateOne(
+//           { _id: ObjectId(foodId) },
+//           { $inc: { quantity: -quantity } } // Subtract purchased quantity from available quantity
+//       );
+
+//       // Example: Store purchase record in a separate collection
+//       const purchaseRecord = {
+//           foodId: ObjectId(foodId),
+//           quantity,
+//           buyerName,
+//           buyerEmail,
+//           buyingDate
+//       };
+
+//       // Store the purchase record in the database
+//       await purchaseCollection.insertOne(purchaseRecord);
+
+//       // Respond with success
+//       res.status(200).json({ message: 'Purchase successful' });
+//   } catch (error) {
+//       console.error('Error processing purchase:', error);
+//       res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
+app.post('/purchase', async (req, res) => {
+  try {
+    const newPurchase = req.body;
+    const result = await purchaseCollection.insertOne(newPurchase);
+    await foodCollection.updateOne(
+      { _id: new ObjectId(newPurchase.foodId) },
+      { $inc: { count: 1 } }
+    );
+    res.json(result);
+  } catch (error) {
+    console.error("Error purchasing food:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
     // single details
     app.get('/food/:id', async (req, res) => {
       const id  = req.params.id;
@@ -58,6 +120,29 @@ async function run() {
           res.send(result);
      
       
+  });
+
+    app.get('/purchase/:id', async (req, res) => {
+      const id  = req.params.id;
+      const query = { _id: new ObjectId(id) }; 
+      const result = await foodCollection.findOne(query);
+    
+          res.send(result);
+     
+      
+  });
+
+  app.get('/topfoods', async (req, res) => {
+    try {
+      const topFoods = await foodCollection.find()
+                        .sort({ count: -1, _id: 1 }) 
+                        .limit(6)
+                        .toArray();
+      res.json(topFoods);
+    } catch (error) {
+      console.error("Error retrieving top foods:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   });
 
   // update
