@@ -50,18 +50,35 @@ async function run() {
     });
 
 
+// app.post('/purchase', async (req, res) => {
+//   try {
+//     const newPurchase = req.body;
+//     const result = await purchaseCollection.insertOne(newPurchase);
+//     await foodCollection.updateOne(
+//       { _id: new ObjectId(newPurchase.foodId) },
+//       { $inc: { count: 1 } }
+//     );
+//     res.json(result);
+//   } catch (error) {
+//     console.error("Error purchasing food:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// });
+
 app.post('/purchase', async (req, res) => {
   try {
-    const newPurchase = req.body;
-    const result = await purchaseCollection.insertOne(newPurchase);
-    await foodCollection.updateOne(
-      { _id: new ObjectId(newPurchase.foodId) },
-      { $inc: { count: 1 } }
-    );
-    res.json(result);
+      const newPurchase = req.body;
+      
+      const result = await purchaseCollection.insertOne(newPurchase);
+      const updateResult = await foodCollection.updateOne(
+          { _id: new ObjectId(newPurchase.foodId) },
+          { $inc: { count: 1, quantity: -newPurchase.quantity } },
+      );
+      console.log('Update result:', updateResult);
+      res.json(result);
   } catch (error) {
-    console.error("Error purchasing food:", error);
-    res.status(500).json({ error: "Internal server error" });
+      console.error("Error purchasing food:", error);
+      res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -156,6 +173,7 @@ app.delete('/my-purchases/:id', async (req,res) =>{
 
     app.post('/food', async(req,res) =>{
         const newFood = req.body;
+        newFood.quantity = parseInt(newFood.quantity);
         console.log(newFood);
         const result = await foodCollection.insertOne(newFood)
         res.send(result)
