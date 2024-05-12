@@ -33,68 +33,23 @@ async function run() {
     const purchaseCollection = client.db('restaurantDB').collection('purchase');
 
     app.get('/food', async (req, res) => {
-      const { name, email } = req.query; // Accept both name and email query parameters
+      const { name, email } = req.query; 
       let query = {};
     
       if (name) {
-        query.name = { $regex: new RegExp(name, 'i') }; // Case-insensitive search by name
+        query.name = { $regex: new RegExp(name, 'i') }; 
       }
     
       if (email) {
         query.email = email; // Exact match by email
       }
     
-      const cursor = foodCollection.find(query); // Query the collection with the specified query
+      const cursor = foodCollection.find(query); 
       const result = await cursor.toArray();
-      res.send(result); // Send the filtered result
+      res.send(result); 
     });
 
 
-
-    // Add this endpoint to your existing server code
-
-// Purchase endpoint
-// app.post('/purchase', async (req, res) => {
-//   try {
-//       const { foodId, quantity, buyerName, buyerEmail, buyingDate } = req.body;
-
-//       // Perform any necessary validation on the incoming data
-      
-//       // Example: Update the food quantity in the database
-//       const food = await foodCollection.findOne({ _id: ObjectId(foodId) });
-//       if (!food) {
-//           return res.status(404).json({ error: 'Food not found' });
-//       }
-
-//       if (food.quantity < quantity) {
-//           return res.status(400).json({ error: 'Insufficient quantity available' });
-//       }
-
-//       // Update the quantity of the food in the database
-//       await foodCollection.updateOne(
-//           { _id: ObjectId(foodId) },
-//           { $inc: { quantity: -quantity } } // Subtract purchased quantity from available quantity
-//       );
-
-//       // Example: Store purchase record in a separate collection
-//       const purchaseRecord = {
-//           foodId: ObjectId(foodId),
-//           quantity,
-//           buyerName,
-//           buyerEmail,
-//           buyingDate
-//       };
-
-//       // Store the purchase record in the database
-//       await purchaseCollection.insertOne(purchaseRecord);
-
-//       // Respond with success
-//       res.status(200).json({ message: 'Purchase successful' });
-//   } catch (error) {
-//       console.error('Error processing purchase:', error);
-//       res.status(500).json({ error: 'Internal server error' });
-//   }
-// });
 app.post('/purchase', async (req, res) => {
   try {
     const newPurchase = req.body;
@@ -125,12 +80,33 @@ app.post('/purchase', async (req, res) => {
     app.get('/purchase/:id', async (req, res) => {
       const id  = req.params.id;
       const query = { _id: new ObjectId(id) }; 
-      const result = await foodCollection.findOne(query);
+      const result = await purchaseCollection.findOne(query);
     
           res.send(result);
      
       
   });
+ 
+
+
+  app.get('/my-purchases', async (req, res) => {
+    try {
+        const userEmail = req.query.email; 
+        const purchases = await purchaseCollection.find({ buyerEmail: userEmail }).toArray();
+        res.json(purchases);
+    } catch (error) {
+        console.error("Error retrieving user's purchases:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+app.delete('/my-purchases/:id', async (req,res) =>{
+  const id = req.params.id;
+  const query = {_id: new ObjectId(id) }
+  const result = await purchaseCollection.deleteOne(query);
+  res.send(result);
+})
+
 
   app.get('/topfoods', async (req, res) => {
     try {
